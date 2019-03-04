@@ -25,6 +25,13 @@ MasternodeList::MasternodeList(QWidget* parent) : QWidget(parent),
     ui->setupUi(this);
 
     ui->startButton->setEnabled(false);
+    ui->startButton->setHidden(true);
+    ui->startAllButton->setEnabled(false);
+    ui->startAllButton->setHidden(true);
+    ui->startMissingButton->setEnabled(false);
+    ui->startMissingButton->setHidden(true);
+    ui->UpdateButton->setEnabled(false);
+    ui->UpdateButton->setHidden(true);
 
     int columnAliasWidth = 100;
     int columnAddressWidth = 200;
@@ -401,7 +408,7 @@ void MasternodeList::on_startMissingButton_clicked()
 void MasternodeList::on_tableWidgetMyMasternodes_itemSelectionChanged()
 {
     if (ui->tableWidgetMyMasternodes->selectedItems().count() > 0) {
-        ui->startButton->setEnabled(true);
+        //ui->startButton->setEnabled(true);
     }
 }
 
