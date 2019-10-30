@@ -54,13 +54,22 @@ static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data
 // + Contains no strange transactions
 static Checkpoints::MapCheckpoints mapCheckpoints =
     boost::assign::map_list_of
-    (0, uint256("000002c9131c15e37b47c77abea2fc9ac755bafa55ec9b33bc158e454a5c3b91"));
+    (0, uint256("0x000002c9131c15e37b47c77abea2fc9ac755bafa55ec9b33bc158e454a5c3b91"))
+    (175, uint256("0x000000790e0c49bc008b0f8356f12d87e6ba26980302d09815e74262cd756cda"))
+	(17543, uint256("0x10eb190756ff1063602b7d4389535b02c091e389def97bad7a0ec06ae7a7c369"))
+	(52102, uint256("0x7c6fa4729a2682350f416e0dccbde757fb5bd4a99c2c1ff94f4c71a4b7ca0ffe"))
+	(104562, uint256("0x0ef90b05d597de3731b25a48c5c7dd8dc03ee085d5309881337df1a638cf21a2"))
+	(183923, uint256("0x77aaf2b46ae8532f64a6c745096e6d1f8a3b25050c5b2dd1c58a953a3c716b40"))
+	(247201, uint256("0x635b32663c1295c9f5537ee119b1b17c984c6a9ea3bd5847401ab9f0d56add5a"))
+	(337814, uint256("0xd05662524b6a592ea27a46f6f0d0fe6a049d0c8baf881e19fdfc1d1b28c78918"));
+
+
 static const Checkpoints::CCheckpointData data = {
     &mapCheckpoints,
-    1547418980, // * UNIX timestamp of last checkpoint block
-    0,          // * total number of transactions between genesis and last checkpoint
+	1572428081, // * UNIX timestamp of last checkpoint block
+	676331,          // * total number of transactions between genesis and last checkpoint
                 //   (the tx=... number in the SetBestChain debug.log lines)
-    100         // * estimated number of transactions per day after checkpoint
+    2000         // * estimated number of transactions per day after checkpoint
 };
 
 static Checkpoints::MapCheckpoints mapCheckpointsTestnet =
@@ -104,6 +113,8 @@ public:
         nLastPOWBlock = 300;
         nMaturity = 59;
         nMasternodeCountDrift = 20;
+		nEnforceNewSporkKey = 1571808600;
+		nRejectOldSporkKey = 1571809200;
 
         nModifierUpdateBlock = 615800;
         nMaxMoneyOut = 13000000 * COIN;
@@ -145,13 +156,14 @@ public:
         assert(hashGenesisBlock == uint256("000002c9131c15e37b47c77abea2fc9ac755bafa55ec9b33bc158e454a5c3b91"));
         assert(genesis.hashMerkleRoot == uint256("0e8de3e080db5e1d5111fb6ec889dcf3cb57c1f08402a645d87513709eb233a5"));
 
-        vSeeds.push_back(CDNSSeedData("nuts.seed.simianlabs.net", "nuts.seed.simianlabs.net"));         // Single node address
-        vSeeds.push_back(CDNSSeedData("94.46.130.130", "94.46.130.130"));      // Lisbon
-        vSeeds.push_back(CDNSSeedData("159.65.34.188", "159.65.34.188"));      // New York
-        vSeeds.push_back(CDNSSeedData("104.248.207.221", "104.248.207.221"));  // Amsterdam
-        vSeeds.push_back(CDNSSeedData("138.68.252.193", "138.68.252.193"));    // San Francisco
-        vSeeds.push_back(CDNSSeedData("167.179.67.201", "167.179.67.201"));    // Tokyo
-        vSeeds.push_back(CDNSSeedData("207.148.80.233", "207.148.80.233"));    // Sydney
+        vSeeds.push_back(CDNSSeedData("206.189.93.175", "206.189.93.175"));
+		vSeeds.push_back(CDNSSeedData("178.128.20.41", "178.128.20.41"));         // Single node address
+        vSeeds.push_back(CDNSSeedData("159.65.134.250", "159.65.134.250"));      // Lisbon
+        vSeeds.push_back(CDNSSeedData("188.166.149.24", "188.166.149.24"));      // New York
+        vSeeds.push_back(CDNSSeedData("157.230.58.7", "157.230.58.7"));  // Amsterdam
+        vSeeds.push_back(CDNSSeedData("178.128.10.40", "178.128.10.40"));    // San Francisco
+        //vSeeds.push_back(CDNSSeedData("167.179.67.201", "167.179.67.201"));    // Tokyo
+        //vSeeds.push_back(CDNSSeedData("207.148.80.233", "207.148.80.233"));    // Sydney
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 53);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 13);
@@ -174,8 +186,8 @@ public:
         fHeadersFirstSyncingActive = false;
 
         nPoolMaxTransactions = 3;
-        //strSporkKey = "0488207ddc1c73a064e636d80ff776f81bdcd6f4a898c9783d128bf487c33db39a6fd2d44b194b141bcc0425d5c3cbd6db561dcf129a8188eefc15d0667317f27d";
-        strSporkKey = "04d056a49e870f6678bd610ede4aa2ffa401f59af85ee09e5cfa3eacb349716d94837584e2ac0017290223e6aa7bfb71085e7baf26b1f73f8646862d36b2e85723";
+        strSporkKey = "0483f813339c434f78594659fda203132fad3c23606165fad705d1836ee9b753613d8f20c45579d9de479a4bd125094fbee3e795f83b33f0353a4851e0337ef6e4";
+		strSporkKeyOld = "04d056a49e870f6678bd610ede4aa2ffa401f59af85ee09e5cfa3eacb349716d94837584e2ac0017290223e6aa7bfb71085e7baf26b1f73f8646862d36b2e85723";
         strObfuscationPoolDummyAddress = "NUAncQ3Z8CEG3FUErSyXdU9vDnwvHigB6b";
 
         nStartMasternodePayments = 1547418980; 

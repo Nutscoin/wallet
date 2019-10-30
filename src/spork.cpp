@@ -11,6 +11,7 @@
 #include "net.h"
 #include "protocol.h"
 #include "sync.h"
+#include "sporkdb.h"
 #include "util.h"
 #include <boost/lexical_cast.hpp>
 
@@ -25,6 +26,36 @@ CSporkManager sporkManager;
 std::map<uint256, CSporkMessage> mapSporks;
 std::map<int, CSporkMessage> mapSporksActive;
 
+void LoadSporksFromDB()
+{
+	for (int i = SPORK_START; i <= SPORK_END; ++i) {
+		// Since not all spork IDs are in use, we have to exclude undefined IDs
+		std::string strSpork = sporkManager.GetSporkNameByID(i);
+		if (strSpork == "Unknown") continue;
+
+		// attempt to read spork from sporkDB
+		CSporkMessage spork;
+		if (!pSporkDB->ReadSpork(i, spork)) {
+			LogPrintf("%s : no previous value for %s found in database\n", __func__, strSpork);
+			continue;
+		}
+
+		// add spork to memory
+		mapSporks[spork.GetHash()] = spork;
+		mapSporksActive[spork.nSporkID] = spork;
+		std::time_t result = spork.nValue;
+		// If SPORK Value is greater than 1,000,000 assume it's actually a Date and then convert to a more readable format
+		if (spork.nValue > 1000000) {
+			LogPrintf("%s : loaded spork %s with value %d : %s", __func__,
+				sporkManager.GetSporkNameByID(spork.nSporkID), spork.nValue,
+				std::ctime(&result));
+		}
+		else {
+			LogPrintf("%s : loaded spork %s with value %d\n", __func__,
+				sporkManager.GetSporkNameByID(spork.nSporkID), spork.nValue);
+		}
+	}
+}
 
 void ProcessSpork(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
@@ -49,6 +80,14 @@ void ProcessSpork(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
         }
 
         LogPrintf("spork - new %s ID %d Time %d bestHeight %d\n", hash.ToString(), spork.nSporkID, spork.nValue, chainActive.Tip()->nHeight);
+
+		if (spork.nTimeSigned >= Params().NewSporkStart()) {
+			if (!sporkManager.CheckSignature(spork, true)) {
+				LogPrintf("%s : Invalid Signature\n", __func__);
+				Misbehaving(pfrom->GetId(), 100);
+				return;
+			}
+		}
 
         if (!sporkManager.CheckSignature(spork)) {
             LogPrintf("spork - invalid signature\n");
@@ -175,19 +214,25 @@ void ReprocessBlocks(int nBlocks)
     }
 }
 
-
-bool CSporkManager::CheckSignature(CSporkMessage& spork)
+bool CSporkManager::CheckSignature(CSporkMessage& spork, bool fCheckSigner)
 {
-    //note: need to investigate why this is failing
-    std::string strMessage = boost::lexical_cast<std::string>(spork.nSporkID) + boost::lexical_cast<std::string>(spork.nValue) + boost::lexical_cast<std::string>(spork.nTimeSigned);
-    CPubKey pubkey(ParseHex(Params().SporkKey()));
+	//note: need to investigate why this is failing
+	std::string strMessage = boost::lexical_cast<std::string>(spork.nSporkID) + boost::lexical_cast<std::string>(spork.nValue) + boost::lexical_cast<std::string>(spork.nTimeSigned);
+	CPubKey pubkeynew(ParseHex(Params().SporkKey()));
+	std::string errorMessage = "";
 
-    std::string errorMessage = "";
-    if (!obfuScationSigner.VerifyMessage(pubkey, spork.vchSig, strMessage, errorMessage)) {
-        return false;
-    }
+	bool fValidWithNewKey = obfuScationSigner.VerifyMessage(pubkeynew, spork.vchSig, strMessage, errorMessage);
 
-    return true;
+	if (fCheckSigner && !fValidWithNewKey)
+		return false;
+
+	// See if window is open that allows for old spork key to sign messages
+	if (!fValidWithNewKey && GetAdjustedTime() < Params().RejectOldSporkKey()) {
+		CPubKey pubkeyold(ParseHex(Params().SporkKeyOld()));
+		return obfuScationSigner.VerifyMessage(pubkeyold, spork.vchSig, strMessage, errorMessage);
+	}
+
+	return fValidWithNewKey;
 }
 
 bool CSporkManager::Sign(CSporkMessage& spork)
@@ -248,7 +293,7 @@ bool CSporkManager::SetPrivKey(std::string strPrivKey)
 
     Sign(msg);
 
-    if (CheckSignature(msg)) {
+    if (CheckSignature(msg, true)) {
         LogPrintf("CSporkManager::SetPrivKey - Successfully initialized as spork signer\n");
         return true;
     } else {

@@ -28,6 +28,7 @@
 #include "rpcserver.h"
 #include "script/standard.h"
 #include "spork.h"
+#include "sporkdb.h"
 #include "txdb.h"
 #include "ui_interface.h"
 #include "util.h"
@@ -212,6 +213,8 @@ void PrepareShutdown()
         pcoinsdbview = NULL;
         delete pblocktree;
         pblocktree = NULL;
+		delete pSporkDB;
+		pSporkDB = NULL;
     }
 #ifdef ENABLE_WALLET
     if (pwalletMain)
@@ -1230,7 +1233,9 @@ bool AppInit2(boost::thread_group& threadGroup)
                 delete pcoinsdbview;
                 delete pcoinscatcher;
                 delete pblocktree;
+				delete pSporkDB;
 
+				pSporkDB = new CSporkDB(0, false, false);
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex);
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex);
                 pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
@@ -1239,7 +1244,10 @@ bool AppInit2(boost::thread_group& threadGroup)
                 if (fReindex)
                     pblocktree->WriteReindexing(true);
 
-                if (!LoadBlockIndex()) {
+				uiInterface.InitMessage(_("Loading sporks..."));
+				LoadSporksFromDB();
+
+				if (!LoadBlockIndex()) {
                     strLoadError = _("Error loading block database");
                     break;
                 }
